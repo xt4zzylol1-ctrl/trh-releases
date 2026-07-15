@@ -1,0 +1,271 @@
+name: Publish Taz's Ride Helper
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-trh.yml"
+      - "automation/release-request.json"
+      - "automation/release.patch"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trh-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release automation repo
+        uses: actions/checkout@v4
+        with:
+          path: release
+
+      - name: Read release request
+        id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release
+          if [ ! -f automation/release-request.json ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          publish=$(jq -r '.publish // false' automation/release-request.json)
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          if [ "$publish" != "true" ]; then
+            exit 0
+          fi
+          echo "source_repo=$(jq -r '.sourceRepo // "xt4zzylol1-ctrl/Taz-Ride-Helper"' automation/release-request.json)" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$(jq -r '.sourceRef // "main"' automation/release-request.json)" >> "$GITHUB_OUTPUT"
+          echo "version_name=$(jq -r '.versionName // ""' automation/release-request.json)" >> "$GITHUB_OUTPUT"
+          echo "version_code=$(jq -r '.versionCode // ""' automation/release-request.json)" >> "$GITHUB_OUTPUT"
+          echo "release_title=$(jq -r '.releaseTitle // ""' automation/release-request.json)" >> "$GITHUB_OUTPUT"
+          jq -r '.changelog // ""' automation/release-request.json > "$RUNNER_TEMP/changelog.txt"
+
+      - name: Stop when publish is disabled
+        if: steps.req.outputs.publish != 'true'
+        run: echo "Publish disabled."
+
+      - name: Checkout Android source
+        if: steps.req.outputs.publish == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.req.outputs.source_repo }}
+          ref: ${{ steps.req.outputs.source_ref }}
+          token: ${{ secrets.TRH_PAT }}
+          path: source
+
+      - name: Apply release patch
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -s release/automation/release.patch ]; then
+            git -C source apply --whitespace=fix "$GITHUB_WORKSPACE/release/automation/release.patch"
+          else
+            echo "No patch to apply."
+          fi
+
+      - name: Apply version override
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd source
+          if [ -n "${{ steps.req.outputs.version_code }}" ]; then
+            perl -0pi -e 's/val\s+appVersionCode\s*=\s*\d+/val appVersionCode = ${{ steps.req.outputs.version_code }}/' app/build.gradle.kts
+          fi
+          if [ -n "${{ steps.req.outputs.version_name }}" ]; then
+            perl -0pi -e 's/val\s+appVersionName\s*=\s*"[^"]+"/val appVersionName = "${{ steps.req.outputs.version_name }}"/' app/build.gradle.kts
+          fi
+          grep -E 'appVersion(Code|Name)' app/build.gradle.kts
+
+      - name: Setup Java
+        if: steps.req.outputs.publish == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Android SDK
+        if: steps.req.outputs.publish == 'true'
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "build-tools;36.0.0" "platforms;android-36" || true
+          sdkmanager "platforms;android-36.1" || true
+
+      - name: Write local signing files
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        env:
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cd source
+          cat > local.properties <<EOF
+          sdk.dir=$ANDROID_HOME
+          MAPS_API_KEY=$MAPS_API_KEY
+          EOF
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > app/release-key.jks
+          cat > keystore.properties <<EOF
+          storeFile=app/release-key.jks
+          storePassword=$RELEASE_STORE_PASSWORD
+          keyAlias=$RELEASE_KEY_ALIAS
+          keyPassword=$RELEASE_KEY_PASSWORD
+          EOF
+
+      - name: Build client release APK
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd source
+          chmod +x ./gradlew
+          ./gradlew :app:assembleClientRelease --no-daemon --stacktrace
+
+      - name: Collect APK metadata
+        if: steps.req.outputs.publish == 'true'
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=$(find source/app/build/outputs/apk/client/release -name 'tazsridehelperv*.apk' | sort | tail -n 1)
+          if [ -z "$apk" ]; then
+            echo "APK not found" >&2
+            exit 1
+          fi
+          sha=$(sha256sum "$apk" | awk '{print $1}')
+          version_name="${{ steps.req.outputs.version_name }}"
+          version_code="${{ steps.req.outputs.version_code }}"
+          if [ -z "$version_name" ]; then
+            version_name=$(grep -E 'val appVersionName' source/app/build.gradle.kts | sed -E 's/.*"([^"]+)".*/\1/')
+          fi
+          if [ -z "$version_code" ]; then
+            version_code=$(grep -E 'val appVersionCode' source/app/build.gradle.kts | sed -E 's/.*=\s*([0-9]+).*/\1/')
+          fi
+          echo "apk=$apk" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub release
+        if: steps.req.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.apk.outputs.version_name }}
+          name: Taz's Ride Helper v${{ steps.apk.outputs.version_name }}
+          body_path: ${{ runner.temp }}/changelog.txt
+          files: ${{ steps.apk.outputs.apk }}
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update remote config files
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        env:
+          TRH_PAT: ${{ secrets.TRH_PAT }}
+          VERSION_NAME: ${{ steps.apk.outputs.version_name }}
+          VERSION_CODE: ${{ steps.apk.outputs.version_code }}
+          APK_SHA256: ${{ steps.apk.outputs.sha }}
+          GIST_ID: cbacf0f50fa9eb5c1ea1412b7ff2ae85
+        run: |
+          set -euo pipefail
+          cd release
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          version_name = os.environ["VERSION_NAME"]
+          version_code = int(os.environ["VERSION_CODE"])
+          sha = os.environ["APK_SHA256"]
+          changelog = Path(os.environ["RUNNER_TEMP"], "changelog.txt").read_text(encoding="utf-8")
+          apk_url = f"https://github.com/xt4zzylol1-ctrl/trh-releases/releases/download/{version_name}/tazsridehelperv{version_name}.apk"
+          path = Path("update-config.json")
+          cfg = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+          update = cfg.setdefault("update", {})
+          update.update({
+              "latestVersionCode": version_code,
+              "latestVersionName": version_name,
+              "apkUrl": apk_url,
+              "apkSha256": sha,
+              "changelog": changelog,
+          })
+          cfg.update({
+              "latestVersionCode": version_code,
+              "latestVersionName": version_name,
+              "apkUrl": apk_url,
+              "apkSha256": sha,
+              "changelog": changelog,
+          })
+          path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          python3 - <<'PY'
+          import json, os, urllib.request
+          from pathlib import Path
+
+          body = json.dumps({
+              "files": {
+                  "gistfile1.txt": {
+                      "content": Path("update-config.json").read_text(encoding="utf-8")
+                  }
+              }
+          }).encode("utf-8")
+          req = urllib.request.Request(
+              f"https://api.github.com/gists/{os.environ['GIST_ID']}",
+              data=body,
+              method="PATCH",
+              headers={
+                  "Authorization": f"Bearer {os.environ['TRH_PAT']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "User-Agent": "trh-publish-workflow",
+                  "Content-Type": "application/json",
+              },
+          )
+          with urllib.request.urlopen(req, timeout=30) as response:
+              response.read()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update-config.json
+          git commit -m "Update TRH config to v${VERSION_NAME}" || echo "No config changes to commit."
+          git push
+
+      - name: Mark request as consumed
+        if: steps.req.outputs.publish == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("automation/release-request.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          data["publish"] = False
+          data["lastPublishedAt"] = datetime.now(timezone.utc).isoformat()
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add automation/release-request.json
+          git commit -m "Mark TRH publish request consumed" || echo "No request changes to commit."
+          git push
