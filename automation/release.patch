@@ -2548,34 +2548,7 @@ index 0237f01..01d2f76 100644
 +        // semnătura = DOAR combinația de stări; textul ecranului se schimbă la fiecare
 +        // ciclu (ordine noduri, distanțe) și ar sparge dedup-ul → jurnal inundat
          val sample = texts.joinToString(" | ").take(600)
--        val sig = "$result|${sample.hashCode()}"
--        if (sig == uberRejectDiagSig) return
--        uberRejectDiagSig = sig
-+        val now = SystemClock.uptimeMillis()
-+        if (result == uberRejectDiagSig && now - uberRejectDiagAt < UBER_REJECT_DIAG_COOLDOWN_MS) return
-+        uberRejectDiagSig = result
-+        uberRejectDiagAt = now
-         StatsStore.addDiag(this, "Uber ofertă respinsă", sample, result)
-+        LicenseManager.uploadDiagnostic(this, "Uber oferta respinsa")
-     }
- 
-     @SuppressLint("ClickableViewAccessibility")
-     private fun showOffer(o: Offer) {
-         currentOffer = o
--        if (privacyMode) return   // detecția/statisticile merg, doar UI-ul e ascuns
-         val wm = windowManager ?: return
--        if (!Settings.canDrawOverlays(this)) return
-+        if (!Settings.canDrawOverlays(this)) {
-+            if (o.source == "Uber" || isXiaomiLikeDevice()) {
-+                logOverlayAdd("overlay card blocat", "permisiunea overlay lipseste pentru ${o.source}")
-+            }
-+            return
-+        }
-+        // orice ofertă scoate butonul din privacy mode, cu animația de apariție —
-+        // șoferul vede bula și cardul normal, fără să atingă butonul-fantomă
-+        if (privacyMode) {
-+            exitPrivacyMode()
-+            mainBtn?.let { b ->
+-        val sig = "$result|${s    mainBtn?.let { b ->
 +                b.alpha = 0f; b.scaleX = 0.4f; b.scaleY = 0.4f
 +                b.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(180).start()
 +            }
