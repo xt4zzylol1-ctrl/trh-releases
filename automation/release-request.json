@@ -1,10 +1,9 @@
 {
-  "publish": false,
+  "publish": true,
   "sourceRepo": "xt4zzylol1-ctrl/Taz-Ride-Helper",
   "sourceRef": "master",
   "versionName": "1.7.3",
   "versionCode": 25,
   "releaseTitle": "Taz's Ride Helper v1.7.3",
-  "changelog": "v1.7.3\n- Reparat Uber in cursa activa: ofertele noi nu mai sunt confundate cu navigatia curenta.\n- OCR Uber revine dupa 5 secunde si accepta fallback cand butonul Accept nu e citit clar.\n- Reparat pozitia iconitei transparente din Privacy Mode: ramane unde este mutata.\n- Sursa sincronizata pentru release: 1fce7725d7f77b72dec5ebade200d8243f9cb7e8\n- Direct publish: 2026-07-15T16:51:52.946Z",
-  "lastPublishedAt": "2026-07-15T17:00:51.555338+00:00"
+  "changelog": "v1.7.3\n- Update Taz's Ride Helper.\n- Vezi sectiunea Noutati pentru modificarile complete."
 }
