@@ -1,0 +1,51 @@
+{
+    "autoAcceptConfirm":  [
+                              "acceptat automat",
+                              "te așteaptă să sosești",
+                              "auto-accepted",
+                              "waiting for you to arrive"
+                          ],
+    "autoAcceptCountdown":  [
+                                "Acceptare automat",
+                                "Auto-accept"
+                            ],
+    "passengerCancel":  [
+                            "anulat",
+                            "cancelled",
+                            "canceled"
+                        ],
+    "passengerCancelContext":  [
+                                   "pasager",
+                                   "Comandă",
+                                   "passenger",
+                                   "order"
+                               ],
+    "driverCancel":  [
+                         "motivul anul",
+                         "cancellation reason"
+                     ],
+    "isCash":  [
+                   "numerar",
+                   "cash"
+               ],
+    "noPenalty":  [
+                      "nu va afecta",
+                      "won\u0027t affect"
+                  ],
+    "uberOcrKeys":  [
+                        "TRH-2ZEF-68F9-564R",
+                        "TRH-4SPS-CQQB-N9MZ"
+                    ],
+    "update":  {
+                   "latestVersionCode":  24,
+                   "latestVersionName":  "1.7.2",
+                   "apkUrl":  "https://github.com/xt4zzylol1-ctrl/trh-releases/releases/download/1.7.2/tazsridehelperv1.7.2.apk",
+                   "changelog":  "v1.7.2\n- Update Taz\u0027s Ride Helper.\n- Vezi sectiunea Noutati pentru modificarile complete.",
+                   "apkSha256":  "0CD25A26841DA476529BE9DFE8CBC1B69DC23865D1320DEAA29533696B1DB247"
+               },
+    "latestVersionCode":  24,
+    "latestVersionName":  "1.7.2",
+    "apkUrl":  "https://github.com/xt4zzylol1-ctrl/trh-releases/releases/download/1.7.2/tazsridehelperv1.7.2.apk",
+    "apkSha256":  "0CD25A26841DA476529BE9DFE8CBC1B69DC23865D1320DEAA29533696B1DB247",
+    "changelog":  "v1.7.2\n- Update Taz\u0027s Ride Helper.\n- Vezi sectiunea Noutati pentru modificarile complete."
+}
