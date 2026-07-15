@@ -5,5 +5,5 @@
   "versionName": "1.7.3",
   "versionCode": 25,
   "releaseTitle": "Taz's Ride Helper v1.7.3",
-  "changelog": "v1.7.3\n- Reparat Uber in cursa activa: ofertele noi nu mai sunt confundate cu navigatia curenta.\n- OCR Uber revine dupa 5 secunde si accepta fallback cand butonul Accept nu e citit clar.\n- Reparat pozitia iconitei transparente din Privacy Mode: ramane unde este mutata."
+  "changelog": "v1.7.3\n- Reparat Uber in cursa activa: ofertele noi nu mai sunt confundate cu navigatia curenta.\n- OCR Uber revine dupa 5 secunde si accepta fallback cand butonul Accept nu e citit clar.\n- Reparat pozitia iconitei transparente din Privacy Mode: ramane unde este mutata.\n- Retry publish: 2026-07-15T16:28:22.8954905Z"
 }
