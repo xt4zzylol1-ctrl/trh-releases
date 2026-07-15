@@ -41,7 +41,7 @@ jobs:
             exit 0
           fi
           echo "source_repo=$(jq -r '.sourceRepo // "xt4zzylol1-ctrl/Taz-Ride-Helper"' automation/release-request.json)" >> "$GITHUB_OUTPUT"
-          echo "source_ref=$(jq -r '.sourceRef // "main"' automation/release-request.json)" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$(jq -r '.sourceRef // "master"' automation/release-request.json)" >> "$GITHUB_OUTPUT"
           echo "version_name=$(jq -r '.versionName // ""' automation/release-request.json)" >> "$GITHUB_OUTPUT"
           echo "version_code=$(jq -r '.versionCode // ""' automation/release-request.json)" >> "$GITHUB_OUTPUT"
           echo "release_title=$(jq -r '.releaseTitle // ""' automation/release-request.json)" >> "$GITHUB_OUTPUT"
