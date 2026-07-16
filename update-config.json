@@ -32,20 +32,11 @@
     "nu va afecta",
     "won't affect"
   ],
-  "uberOcrKeys": [
-    "TRH-2ZEF-68F9-564R",
-    "TRH-4SPS-CQQB-N9MZ"
-  ],
   "update": {
-    "latestVersionCode": 25,
-    "latestVersionName": "1.7.3",
-    "apkUrl": "https://github.com/xt4zzylol1-ctrl/trh-releases/releases/download/1.7.3/tazsridehelperv1.7.3.apk",
-    "changelog": "v1.7.3\n- Reparat Uber in cursa activa: ofertele noi nu mai sunt confundate cu navigatia curenta.\n- OCR Uber revine dupa 5 secunde si accepta fallback cand butonul Accept nu e citit clar.\n- Reparat pozitia iconitei transparente din Privacy Mode: ramane unde este mutata.\n- Sursa sincronizata pentru release: 1fce7725d7f77b72dec5ebade200d8243f9cb7e8\n- Direct publish: 2026-07-15T16:51:52.946Z\n",
-    "apkSha256": "8531a3280189cccab2ec62a5377e9ee75f9b7198e2cecf4773bc071f23c862b5"
-  },
-  "latestVersionCode": 25,
-  "latestVersionName": "1.7.3",
-  "apkUrl": "https://github.com/xt4zzylol1-ctrl/trh-releases/releases/download/1.7.3/tazsridehelperv1.7.3.apk",
-  "apkSha256": "8531a3280189cccab2ec62a5377e9ee75f9b7198e2cecf4773bc071f23c862b5",
-  "changelog": "v1.7.3\n- Reparat Uber in cursa activa: ofertele noi nu mai sunt confundate cu navigatia curenta.\n- OCR Uber revine dupa 5 secunde si accepta fallback cand butonul Accept nu e citit clar.\n- Reparat pozitia iconitei transparente din Privacy Mode: ramane unde este mutata.\n- Sursa sincronizata pentru release: 1fce7725d7f77b72dec5ebade200d8243f9cb7e8\n- Direct publish: 2026-07-15T16:51:52.946Z\n"
+    "latestVersionCode": 27,
+    "latestVersionName": "1.7.5",
+    "apkUrl": "https://github.com/xt4zzylol1-ctrl/trh-releases/releases/download/1.7.5/tazsridehelperv1.7.5.apk",
+    "changelog": "v1.7.5\n- Reparat sursa de config veche care bloca livrarea update-urilor.\n- Reparat: OCR Uber nu mai afiseaza carduri gresite in timpul unei curse active.\n- Verifica tab-ul Noutati pentru detalii.\n",
+    "apkSha256": "d6a9c1b1763fc275bce354c5af96a3d6055c22e23ac04c9b2107c88a8b9e938f"
+  }
 }
